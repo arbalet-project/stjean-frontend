@@ -65,7 +65,7 @@ export class HomePage {
       message: message,
       buttons: buttons
     });
-    this.loadingWindow.dismiss();
+    if(this.loadingWindow) this.loadingWindow.dismiss();
     this.popUp.present();
   }
   checkBluetoothList(list) {
@@ -85,8 +85,8 @@ export class HomePage {
           // Success case
           this.showToast("Vous pouvez maintenant jouer !");
           this.isInFailureState = false;
-          this.loadingWindow.dismiss();
-          this.popUp.dismiss();
+          if(this.loadingWindow) this.loadingWindow.dismiss();
+          if(this.popUp) this.popUp.dismiss();
           // Start the observable to check every second if connect is lost
           this.checkConnectionSub = Observable.interval(1000).subscribe(() => {
             this.connectBluetoothIfNecessary();
