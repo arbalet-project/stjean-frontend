@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NavController, Platform, LoadingController, ToastController, AlertController, Loading } from 'ionic-angular';
+import { NavController, Platform, LoadingController, ToastController, AlertController, Loading, Alert } from 'ionic-angular';
 import { ScreenOrientation } from '@ionic-native/screen-orientation';
 import { Vibration } from '@ionic-native/vibration';
 import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
@@ -14,6 +14,8 @@ export class HomePage {
   checkConnectionSub : Subscription;
   loadingWindow : Loading;
   isInFailureState : Boolean = false;
+  popUp : Alert;
+  verboseErrors : Boolean = true;  // Useful for debug
 
   constructor(public navCtrl: NavController,
               public screenOrientation: ScreenOrientation,
@@ -30,6 +32,7 @@ export class HomePage {
   ionViewWillEnter() {
     this.connectBluetoothIfNecessary();
   }
+
   showToast(content: string, timeout: number=4000) {
     let toast = this.toastController.create({
       message: content,
@@ -38,18 +41,32 @@ export class HomePage {
     });
     toast.present();
   }
-  showAlert(title, message) {
-    let popUp = this.alertController.create({
+
+  showAlert(title: string, message: string, openSettings:Boolean = false) {
+    let buttons: Array<Object> = [{
+      text: 'Réessayer maintenant',
+      handler: () => {
+        this.isInFailureState = false;
+        this.connectBluetoothIfNecessary();
+      }
+    }];
+    
+    if(openSettings) {
+      buttons.push({
+        text: "Ouvrir les paramètres",
+        handler: () => {
+          this.bluetoothSerial.showBluetoothSettings().then(() => {this.connectBluetoothIfNecessary();});
+        }
+      });
+    }
+
+    this.popUp = this.alertController.create({
       title: title,
       message: message,
-      buttons: [{
-        text: 'Réessayer maintenant',
-        handler: () => {
-          this.connectBluetoothIfNecessary();
-        }
-      }]
+      buttons: buttons
     });
-    popUp.present();
+    this.loadingWindow.dismiss();
+    this.popUp.present();
   }
   checkBluetoothList(list) {
     let found : boolean = false;
@@ -69,24 +86,26 @@ export class HomePage {
           this.showToast("Vous pouvez maintenant jouer !");
           this.isInFailureState = false;
           this.loadingWindow.dismiss();
+          this.popUp.dismiss();
           // Start the observable to check every second if connect is lost
           this.checkConnectionSub = Observable.interval(1000).subscribe(() => {
             this.connectBluetoothIfNecessary();
           });
         },
-        (reason) => { this.raiseConnectionFailureRoutine(false, reason); });    
+        (reason) => { this.raiseConnectionFailureRoutine(true, true, reason); });    
     }
     else {
-      this.raiseConnectionFailureRoutine(false);
+      this.raiseConnectionFailureRoutine(true, false);
     }
   }
   connectBluetoothIfNecessary() {
     this.bluetoothSerial.isConnected()
     .then().catch(() => {
       this.presentLoadingDefault();
-      this.bluetoothSerial.enable();
-      this.bluetoothSerial.list().then(list => this.checkBluetoothList(list),
-                                       reason => this.raiseConnectionFailureRoutine(reason));
+      this.bluetoothSerial.enable().then(value => {
+        this.bluetoothSerial.list().then(list => this.checkBluetoothList(list),
+                                         reason => this.raiseConnectionFailureRoutine(true, false, reason));
+      });
     });
   }
   presentLoadingDefault() {
@@ -97,14 +116,17 @@ export class HomePage {
     this.loadingWindow.present();
   
     setTimeout(() => {
-      this.bluetoothSerial.isConnected()
-      .then().catch(() => {
-        this.raiseConnectionFailureRoutine(true, "TIMEOUT");
+      this.bluetoothSerial.isConnected().then().catch(() => {
+        this.bluetoothSerial.isEnabled().then(() => {
+          this.raiseConnectionFailureRoutine(true, false, "Timeout");
+        }).catch(() => {
+          this.raiseConnectionFailureRoutine(false, false, "Bluetooth disabled");
+        });
       });
     }, 10000);
   }
 
-  raiseConnectionFailureRoutine(isAssociated: Boolean, reason: string = "") {
+  raiseConnectionFailureRoutine(isBluetoothEnabled: Boolean, isAssociated: Boolean, reason: string = "") {
     let wasInFailureState = this.isInFailureState;
     this.isInFailureState = true;
     if(this.checkConnectionSub && !this.checkConnectionSub.closed) {
@@ -113,60 +135,64 @@ export class HomePage {
 
     if(!wasInFailureState) {
       let title : string = "";
-      if(isAssociated) {
-        title = "Connexion impossible";
+      let text : string = "";
+      let openSettings : Boolean = false;
+
+      if(!isBluetoothEnabled) {
+        title = "Bluetooth nécessaire";
+        text = "Veuillez activer le Bluetooth dans les paramètres Bluetooth puis réessayer. ";
+        openSettings = true;
+      }
+      else if(!isAssociated) {
+        title = "Associez votre smartphone";
+        text = "Veuillez vous associer à ARBALET_SAINT_JEAN avec le mot de passe 1234 dans les paramètres Bluetooth puis réessayer. ";
+        openSettings = true;
       }
       else {
-        title = "Associez votre smartphone";
+        title = "Connexion impossible";
+        text = "Veuillez vous approcher d'Arbalet Saint Jean puis réessayer. ";
       }
 
-      let text : string = "";
-      if(isAssociated) {
-        text += "Veuillez vous approcher d'Arbalet Saint Jean puis essayer à nouveau. ";
-      }
-      else {
-        text += "Veuillez vous associer à ARBALET_SAINT_JEAN avec le mot de passe 1234 via l'utilitaire Bluetooth de votre smartphone puis réessayez";
-      }
-      if(reason != "") {
+      if(reason != "" && this.verboseErrors) {
         text += "Code d'erreur : " + reason;
       }
 
-      this.showAlert(title, text);
+      this.showAlert(title, text, openSettings);
     }
   }
 
   onUp() {
-    this.bluetoothSerial.write('Up').then(() => { /* success */ }, this.raiseConnectionFailureRoutine);
+    this.bluetoothSerial.write('Up\r\n').then(() => { /* success */ }, () => { this.raiseConnectionFailureRoutine(true, true); });
     this.vibration.vibrate(40);
     $('#upArrow').hide({duration:0, done: function() {$('#upArrow').fadeIn(200);}});
   }
   onDown() {
-    this.bluetoothSerial.write('Down').then(() => { /* success */ }, this.raiseConnectionFailureRoutine);
+    this.bluetoothSerial.write('Down\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
     this.vibration.vibrate(40);
     $('#downArrow').hide({duration:0, done: function() {$('#downArrow').fadeIn(200);}});
   }
   onLeft() {
-    this.bluetoothSerial.write('Left').then(() => { /* success */ }, this.raiseConnectionFailureRoutine);
+    this.bluetoothSerial.write('Left\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
     this.vibration.vibrate(40);
     $('#leftArrow').hide({duration:0, done: function() {$('#leftArrow').fadeIn(200);}});
   }
   onRight() {
-    this.bluetoothSerial.write('Right').then(() => { /* success */ }, this.raiseConnectionFailureRoutine);
+    this.bluetoothSerial.write('Right\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
     this.vibration.vibrate(40);
     $('#rightArrow').hide({duration:0, done: function() {$('#rightArrow').fadeIn(200);}});
   }
   onRotate() {
-    this.bluetoothSerial.write('Btn1').then(() => { /* success */ }, this.raiseConnectionFailureRoutine);
+    this.bluetoothSerial.write('Btn1\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
     this.vibration.vibrate(40);
     $('#rotateArrow').hide({duration:0, done: function() {$('#rotateArrow').fadeIn(200);}});
   }
   onRestart() {
-    this.bluetoothSerial.write('Select').then(() => { /* success */ }, this.raiseConnectionFailureRoutine);
+    this.bluetoothSerial.write('Select\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
     this.vibration.vibrate(40);
     $('#restartArrow').hide({duration:0, done: function() {$('#restartArrow').fadeIn(200);}});
   }
   onNext() {
-    this.bluetoothSerial.write('Start').then(() => { /* success */ }, this.raiseConnectionFailureRoutine);
+    this.bluetoothSerial.write('Start\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
     this.vibration.vibrate(40);
     $('#nextArrow').hide({duration:0, done: function() {$('#nextArrow').fadeIn(200);}});
   }
