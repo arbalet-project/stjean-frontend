@@ -226,6 +226,7 @@ export class HomePage {
   }
 
   showAbout() {
-    this.navCtrl.push(AboutPage).catch(err=> {this.showToast("ERR " + err, 5000);});
+    this.navCtrl.push(AboutPage);
+  }
   }
 }
