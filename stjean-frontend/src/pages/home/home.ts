@@ -57,16 +57,19 @@ export class HomePage {
     if(openSettings) {
       buttons.push({
         text: "Ouvrir les paramètres",
+        role: "null",
         handler: () => {
-          this.bluetoothSerial.showBluetoothSettings().then(() => {this.connectBluetoothIfNecessary();});
-        }
+          this.bluetoothSerial.showBluetoothSettings();
+          this.connectBluetoothIfNecessary(); // Make sure there's a new alert after opening settings
+        },
       });
     }
 
     this.popUp = this.alertController.create({
       title: title,
       message: message,
-      buttons: buttons
+      buttons: buttons,
+      enableBackdropDismiss: false
     });
     if(this.loadingWindow) this.loadingWindow.dismiss();
     this.popUp.present();
