@@ -15,7 +15,7 @@ export class HomePage {
   checkConnectionSub : Subscription;
   loadingWindow : Loading;
   isInFailureState : Boolean = false;
-  isTryingToConnect : Boolean = true;
+  isTryingToConnect : Boolean = false;
   popUp : Alert;
   verboseErrors : Boolean = true;  // Useful for debug
 
