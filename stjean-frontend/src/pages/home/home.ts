@@ -228,5 +228,4 @@ export class HomePage {
   showAbout() {
     this.navCtrl.push(AboutPage);
   }
-  }
 }
