@@ -31,7 +31,9 @@ export class HomePage {
       }
   }
   ionViewWillEnter() {
-    this.connectBluetoothIfNecessary();
+    if (this.platform.is('mobile')) {
+      this.connectBluetoothIfNecessary();
+    }
   }
 
   showToast(content: string, timeout: number=4000) {
@@ -163,38 +165,52 @@ export class HomePage {
   }
 
   onUp() {
-    this.bluetoothSerial.write('Up\r\n').then(() => { /* success */ }, () => { this.raiseConnectionFailureRoutine(true, true); });
-    this.vibration.vibrate(40);
+    if (this.platform.is('mobile')) {
+      this.bluetoothSerial.write('Up\r\n').then(() => { /* success */ }, () => { this.raiseConnectionFailureRoutine(true, true); });
+      this.vibration.vibrate(40);
+    }
     $('#upArrow').hide({duration:0, done: function() {$('#upArrow').fadeIn(200);}});
   }
   onDown() {
-    this.bluetoothSerial.write('Down\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
-    this.vibration.vibrate(40);
+    if (this.platform.is('mobile')) {
+      this.bluetoothSerial.write('Down\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
+      this.vibration.vibrate(40);
+    }
     $('#downArrow').hide({duration:0, done: function() {$('#downArrow').fadeIn(200);}});
   }
   onLeft() {
-    this.bluetoothSerial.write('Left\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
-    this.vibration.vibrate(40);
+    if (this.platform.is('mobile')) {
+      this.bluetoothSerial.write('Left\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
+      this.vibration.vibrate(40);
+    }
     $('#leftArrow').hide({duration:0, done: function() {$('#leftArrow').fadeIn(200);}});
   }
   onRight() {
-    this.bluetoothSerial.write('Right\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
-    this.vibration.vibrate(40);
+    if (this.platform.is('mobile')) {
+      this.bluetoothSerial.write('Right\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
+      this.vibration.vibrate(40);
+    }
     $('#rightArrow').hide({duration:0, done: function() {$('#rightArrow').fadeIn(200);}});
   }
   onRotate() {
-    this.bluetoothSerial.write('Btn1\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
-    this.vibration.vibrate(40);
+    if (this.platform.is('mobile')) {
+      this.bluetoothSerial.write('Btn1\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
+      this.vibration.vibrate(40);
+    }
     $('#rotateArrow').hide({duration:0, done: function() {$('#rotateArrow').fadeIn(200);}});
   }
   onRestart() {
-    this.bluetoothSerial.write('Select\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
-    this.vibration.vibrate(40);
+    if (this.platform.is('mobile')) {
+      this.bluetoothSerial.write('Select\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
+      this.vibration.vibrate(40);
+    }
     $('#restartArrow').hide({duration:0, done: function() {$('#restartArrow').fadeIn(200);}});
   }
   onNext() {
-    this.bluetoothSerial.write('Start\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
-    this.vibration.vibrate(40);
+    if (this.platform.is('mobile')) {
+      this.bluetoothSerial.write('Start\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
+      this.vibration.vibrate(40);
+    }
     $('#nextArrow').hide({duration:0, done: function() {$('#nextArrow').fadeIn(200);}});
   }
 
