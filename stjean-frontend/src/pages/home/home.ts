@@ -58,10 +58,9 @@ export class HomePage {
     if(openSettings) {
       buttons.push({
         text: "Ouvrir les paramètres",
-        role: "null",
         handler: () => {
           this.bluetoothSerial.showBluetoothSettings();
-          this.connectBluetoothIfNecessary(); // Make sure there's a new alert after opening settings
+          this.showAlert(title, message, openSettings); // Make sure there's a new alert after opening settings
         },
       });
     }
