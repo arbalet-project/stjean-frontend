@@ -1,3 +1,4 @@
+import { AboutPage } from './../about/about';
 import { Component } from '@angular/core';
 import { NavController, Platform, LoadingController, ToastController, AlertController, Loading, Alert } from 'ionic-angular';
 import { ScreenOrientation } from '@ionic-native/screen-orientation';
@@ -195,5 +196,9 @@ export class HomePage {
     this.bluetoothSerial.write('Start\r\n').then(() => { /* success */ },  () => { this.raiseConnectionFailureRoutine(true, true); });
     this.vibration.vibrate(40);
     $('#nextArrow').hide({duration:0, done: function() {$('#nextArrow').fadeIn(200);}});
+  }
+
+  showAbout() {
+    this.navCtrl.push(AboutPage).catch(err=> {this.showToast("ERR " + err, 5000);});
   }
 }
