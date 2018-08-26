@@ -15,6 +15,7 @@ export class HomePage {
   checkConnectionSub : Subscription;
   loadingWindow : Loading;
   isInFailureState : Boolean = false;
+  isTryingToConnect : Boolean = true;
   popUp : Alert;
   verboseErrors : Boolean = true;  // Useful for debug
 
@@ -108,28 +109,36 @@ export class HomePage {
     this.bluetoothSerial.isConnected()
     .then().catch(() => {
       this.presentLoadingDefault();
-      this.bluetoothSerial.enable().then(value => {
-        this.bluetoothSerial.list().then(list => this.checkBluetoothList(list),
-                                         reason => this.raiseConnectionFailureRoutine(true, false, reason));
-      });
+      this.bluetoothSerial.isEnabled().then(() => {
+          this.bluetoothSerial.list().then(list => this.checkBluetoothList(list),
+                                          reason => this.raiseConnectionFailureRoutine(true, false, reason));
+        }).catch(reason => {
+          this.bluetoothSerial.enable(); // Don't rely on the result: not supported on iOS
+          this.raiseConnectionFailureRoutine(false, false, reason);
+        });
     });
   }
+
   presentLoadingDefault() {
-    this.loadingWindow = this.loadingCtrl.create({
-      content: 'Nous cherchons Arbalet Saint Jean près de vous ...'
-    });
-  
-    this.loadingWindow.present();
-  
-    setTimeout(() => {
-      this.bluetoothSerial.isConnected().then().catch(() => {
-        this.bluetoothSerial.isEnabled().then(() => {
-          this.raiseConnectionFailureRoutine(true, false, "Timeout");
-        }).catch(() => {
-          this.raiseConnectionFailureRoutine(false, false, "Bluetooth disabled");
-        });
+    if(!this.isTryingToConnect) {
+      this.loadingWindow = this.loadingCtrl.create({
+        content: 'Nous cherchons Arbalet Saint Jean près de vous ...'
       });
-    }, 10000);
+
+      this.loadingWindow.onDidDismiss(() => {
+        this.isTryingToConnect = false;
+      });
+      
+      this.isTryingToConnect = true;  
+      this.loadingWindow.present();
+    
+      setTimeout(() => {
+        if(this.isTryingToConnect) {
+          // Sanity check, but should naver happen since Bluetooth methods reply fast
+          this.raiseConnectionFailureRoutine(false, false, "Connection procedure lasted too long");
+        }
+      }, 10000);
+    }
   }
 
   raiseConnectionFailureRoutine(isBluetoothEnabled: Boolean, isAssociated: Boolean, reason: string = "") {
