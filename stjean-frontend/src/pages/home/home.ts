@@ -6,6 +6,7 @@ import { Vibration } from '@ionic-native/vibration';
 import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
 import * as $ from 'jquery';
 import { Subscription, Observable } from 'rxjs/Rx';
+import { Insomnia } from '@ionic-native/insomnia';
 
 @Component({
   selector: 'page-home',
@@ -26,9 +27,14 @@ export class HomePage {
               public loadingCtrl: LoadingController,
               private bluetoothSerial: BluetoothSerial,
               private toastController: ToastController,
-              private alertController: AlertController) {
+              private alertController: AlertController,
+              private insomnia:Insomnia) {
       if (this.platform.is('mobile')) {
         this.screenOrientation.lock(this.screenOrientation.ORIENTATIONS.LANDSCAPE);
+        this.platform.pause.subscribe(() => {
+          this.freeBluetooth();
+        });
+        this.insomnia.keepAwake();
       }
   }
   ionViewWillEnter() {
@@ -74,6 +80,7 @@ export class HomePage {
     if(this.loadingWindow) this.loadingWindow.dismiss();
     this.popUp.present();
   }
+  
   checkBluetoothList(list) {
     let found : boolean = false;
     let macAddress : string;
@@ -127,7 +134,7 @@ export class HomePage {
       this.loadingWindow.onDidDismiss(() => {
         this.isTryingToConnect = false;
       });
-      
+
       this.isTryingToConnect = true;  
       this.loadingWindow.present();
     
@@ -227,5 +234,18 @@ export class HomePage {
 
   showAbout() {
     this.navCtrl.push(AboutPage);
+  }
+
+  freeBluetooth() {
+    if(this.bluetoothSerial) {
+      this.bluetoothSerial.isConnected().then(() => {
+        this.bluetoothSerial.disconnect();
+        if(this.checkConnectionSub && !this.checkConnectionSub.closed) {
+          this.checkConnectionSub.unsubscribe();
+        }
+        this.showAlert("Êtes-vous encore là ?", "Vous sembliez occupé, nous avons rendu la main à d'autres joueurs. Voulez-vous vous reconnecter ?", false);
+        this.isInFailureState = true;
+      });
+    }
   }
 }

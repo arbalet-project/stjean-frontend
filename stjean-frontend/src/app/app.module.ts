@@ -1,3 +1,4 @@
+import { Insomnia } from '@ionic-native/insomnia';
 import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
 import { Vibration } from '@ionic-native/vibration';
 import { BrowserModule } from '@angular/platform-browser';
@@ -34,6 +35,7 @@ import { AboutPage } from './../pages/about/about';
     Vibration,
     BluetoothSerial,
     ToastController,
+    Insomnia,
     {provide: ErrorHandler, useClass: IonicErrorHandler}
   ]
 })

@@ -85,5 +85,6 @@
     <plugin name="cordova-plugin-screen-orientation" spec="^3.0.1" />
     <plugin name="cordova-plugin-bluetooth-serial" spec="^0.4.7" />
     <plugin name="cordova-plugin-x-toast" spec="^2.7.0" />
+    <plugin name="cordova-plugin-insomnia" spec="^4.3.0" />
     <engine name="android" spec="~7.0.0" />
 </widget>
