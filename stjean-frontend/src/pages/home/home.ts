@@ -18,7 +18,7 @@ export class HomePage {
   isInFailureState : Boolean = false;
   isTryingToConnect : Boolean = false;
   popUp : Alert;
-  verboseErrors : Boolean = true;  // Useful for debug
+  verboseErrors : Boolean = false;  // Useful for debug
 
   constructor(public navCtrl: NavController,
               public screenOrientation: ScreenOrientation,
